@@ -1,0 +1,40 @@
+name: Rollback Strategy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Backup Current Live Version
+        run: |
+          mkdir -p backup
+          cp -r live/* backup/ || true
+
+      - name: Deploy New Version
+        run: |
+          rm -rf live/*
+          cp -r app-v2/* live/
+
+      - name: Health Check
+        run: |
+          if grep -q "Stable" live/index.html
+          then
+            echo "Application Healthy"
+          else
+            echo "Health Check Failed"
+            exit 1
+          fi
+
+      - name: Rollback to Previous Version
+        if: failure()
+        run: |
+          rm -rf live/*
+          cp -r backup/* live/
+          echo "Rollback Completed"

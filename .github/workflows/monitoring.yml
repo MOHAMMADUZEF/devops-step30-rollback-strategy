@@ -1,0 +1,38 @@
+name: Monitoring Notification
+
+on:
+  workflow_dispatch:
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Check Application
+        run: |
+          if [ -f live/index.html ]; then
+            echo "Application is running"
+          else
+            echo "Application failed"
+            exit 1
+          fi
+
+      - name: Send Success Message
+        if: success()
+        run: |
+          curl -H "Content-Type: application/json" \
+          -X POST \
+          -d '{"content":"✅ Deployment Successful"}' \
+          ${{ secrets.DISCORD_WEBHOOK }}
+
+      - name: Send Failure Message
+        if: failure()
+        run: |
+          curl -H "Content-Type: application/json" \
+          -X POST \
+          -d '{"content":"❌ Deployment Failed"}' \
+          ${{ secrets.DISCORD_WEBHOOK }}

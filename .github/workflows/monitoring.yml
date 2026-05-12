@@ -12,27 +12,28 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Check Application
+      - name: Health Check
         run: |
-          if [ -f live/index.html ]; then
-            echo "Application is running"
+          if grep -q "Stable" live/index.html
+          then
+            echo "Application Healthy"
           else
-            echo "Application failed"
+            echo "Health Check Failed"
             exit 1
           fi
 
       - name: Send Success Message
         if: success()
         run: |
-          curl -H "Content-Type: application/json" \
-          -X POST \
-          -d '{"content":"✅ Deployment Successful"}' \
+          curl -X POST \
+          -H "Content-Type: application/json" \
+          -d "{\"content\":\"✅ Deployment Successful\"}" \
           ${{ secrets.DISCORD_WEBHOOK }}
 
       - name: Send Failure Message
         if: failure()
         run: |
-          curl -H "Content-Type: application/json" \
-          -X POST \
-          -d '{"content":"❌ Deployment Failed"}' \
+          curl -X POST \
+          -H "Content-Type: application/json" \
+          -d "{\"content\":\"❌ Deployment Failed\"}" \
           ${{ secrets.DISCORD_WEBHOOK }}
